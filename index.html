@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smart Fruit Quality & Safety Scanner — Multi-Page System (ESP32)</title>
+<style>
+:root{--bg:#07121e;--card:#0e1c2c;--card2:#13253a;--line:#29425f;--text:#eef7ff;--muted:#9fb3c9;--cyan:#55dfff;--green:#4be58b;--yellow:#ffd166;--red:#ff7373;--blue:#65a8ff}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#06101a,#0b1b2e);color:var(--text);font-family:Arial,Helvetica,sans-serif}.wrap{max-width:1400px;margin:auto;padding:20px}h1,h2,h3{margin-top:0}
+
+/* Multi-Page View Control */
+.page-view{display:none;animation:fadeIn 0.3s ease-in-out}
+.page-view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* Navigation Bar */
+.page-nav-bar{display:flex;justify-content:space-between;align-items:center;background:var(--card);border:1px solid var(--line);padding:14px 22px;border-radius:14px;margin-bottom:25px}
+.page-nav-bar span{color:var(--cyan);font-weight:700;font-size:15px}
+.nav-buttons{display:flex;gap:10px}
+
+/* Front Cover Page Styles */
+.front-page{background:linear-gradient(135deg,#0e2238,#081524);border:1px solid var(--cyan);border-radius:24px;padding:35px 40px;box-shadow:0 15px 40px rgba(0,0,0,0.6);text-align:center;position:relative;overflow:hidden}
+.front-page::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--cyan),var(--green),var(--yellow))}
+
+/* Banner Container (Full Image Display, No Cropping) */
+.institute-banner-wrapper{width:100%;margin:0 auto 25px auto;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 6px 20px rgba(0,0,0,0.4)}
+.institute-banner-wrapper img{width:100%;height:auto;display:block;object-fit:contain}
+
+.front-page h1{font-size:36px;margin-bottom:10px;background:linear-gradient(90deg,#fff,#79eaff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.front-subtitle{font-size:16px;color:var(--muted);max-width:850px;margin:0 auto 25px auto;line-height:1.6}
+
+/* Team Grid Styles */
+.team-section{margin-top:25px;padding-top:20px;border-top:1px solid var(--line)}
+.team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-top:15px}@media(max-width:900px){.team-grid{grid-template-columns:1fr 1fr}}
+.team-member-card{background:rgba(19,37,58,0.7);border:1px solid var(--line);border-radius:12px;padding:15px;text-align:center}
+.team-avatar{width:65px;height:65px;border-radius:50%;background:#1d3651;border:2px solid var(--cyan);margin:0 auto 10px auto;display:grid;place-items:center;font-size:16px;color:var(--muted);overflow:hidden}
+.team-avatar img{width:100%;height:100%;object-fit:cover}
+.team-member-card h4{margin:0 0 4px 0;font-size:14px;color:var(--text)}
+.team-member-card span{font-size:11px;color:var(--muted)}
+
+.project-meta{display:flex;justify-content:center;gap:30px;flex-wrap:wrap;margin-top:20px;padding-top:15px;border-top:1px solid var(--line)}
+.meta-box{background:rgba(19,37,58,0.7);padding:10px 18px;border-radius:10px;border:1px solid var(--line);text-align:left;min-width:200px}
+.meta-box span{display:block;color:var(--muted);font-size:11px}
+.meta-box b{font-size:13px;color:var(--text)}
+
+/* Single Large Prototype View */
+.single-model-container{width:100%;max-width:700px;height:450px;background:#050d14;border:2px dashed var(--line);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;margin:0 auto 15px auto}
+.single-model-container img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px}
+.img-placeholder-text{color:var(--muted);font-size:14px;margin-top:12px}
+
+/* Existing Layout Styles */
+.hero{padding:22px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(120deg,#0c1c2c,#10243a);box-shadow:0 15px 40px #0005;margin-bottom:20px}.hero h1{font-size:30px;margin-bottom:6px}.sub{color:var(--muted);line-height:1.5}.controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}select,button,input[type="text"]{border:1px solid var(--line);background:#12273d;color:var(--text);padding:11px 15px;border-radius:10px;font-size:15px}button{cursor:pointer;background:#117f9f;font-weight:700}button:hover{filter:brightness(1.12)}
+.topgrid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-top:16px}@media(max-width:1050px){.topgrid{grid-template-columns:1fr}}.card{background:rgba(14,28,44,.97);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 8px 25px #0003;margin-bottom:16px}.card h2{font-size:22px;margin-bottom:15px}
+
+/* internal machine */
+.machinebox{display:grid;grid-template-columns:1fr 1fr;gap:15px}@media(max-width:760px){.machinebox{grid-template-columns:1fr}}.scanner{height:420px;border:1px solid #33516f;border-radius:16px;background:linear-gradient(160deg,#111f30,#08121d);position:relative;overflow:hidden}.scanner-title{position:absolute;top:12px;left:15px;color:#8feaff;font-weight:700}
+.fruit{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);width:190px;height:190px;display:grid;place-items:center;font-size:130px;line-height:1;filter:drop-shadow(0 12px 10px #0009);z-index:2}
+.probe{position:absolute;top:-60px;width:14px;height:175px;background:linear-gradient(90deg,#9aa5b0,#f2f7fa,#7d8894);border-radius:8px;transition:top 1s,left 1s;z-index:4}.probe:after{content:"";position:absolute;bottom:-8px;left:2px;border-left:5px solid transparent;border-right:5px solid transparent;border-top:13px solid #cfd8df}.probe1{left:calc(50% - 30px);transform:rotate(2deg)}.probe2{left:calc(50% + 20px);transform:rotate(-2deg)}.scanner.inject .probe,.scanner.collect .probe,.scanner.finish .probe{top:122px}.scanner.collect .probe1{top:132px}.scanner.collect .probe2{top:128px}.scanner.finish .probe{top:-60px}.fluid{position:absolute;width:6px;height:0;background:#55dfff;left:calc(50% - 22px);top:145px;z-index:3;transition:height 1s}.scanner.inject .fluid{height:70px}.sample{position:absolute;width:12px;height:12px;border-radius:50%;background:#ffcb73;opacity:0;left:calc(50% + 27px);top:155px;z-index:5}.scanner.collect .sample{opacity:1;animation:sampleUp 1.4s infinite}.pump{position:absolute;right:15px;bottom:15px;border:1px solid #31516d;background:#0b1827;border-radius:10px;padding:9px;font-size:12px;color:#9eb4ca}.statusbadge{position:absolute;left:15px;bottom:15px;padding:8px 10px;border-radius:999px;background:#102d40;color:#79eaff;font-size:12px}.legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.legend span{padding:6px 9px;border-radius:8px;background:#12263b;color:#b8cce0;font-size:12px}.legend .inj{border-left:3px solid #55dfff}.legend .col{border-left:3px solid #ffcb73}.legend .samp{border-left:3px solid #4be58b}
+@keyframes sampleUp{0%{top:155px}100%{top:72px}}
+
+/* customer dashboard */
+.dashboard{min-height:420px;background:#07121c;border:1px solid #28506b;border-radius:16px;padding:16px}.dashhead{display:flex;justify-content:space-between;align-items:center;gap:10px}.fruitname{font-size:22px;font-weight:800}.safe{padding:7px 10px;border-radius:999px;background:#113c2d;color:#76f0ad;border:1px solid #2d7555;font-weight:700;font-size:12px}
+.dashfruit{background:#fff!important;height:210px;border-radius:12px;margin:14px 0;display:grid;place-items:center;font-size:120px;line-height:1;border:1px solid #d5dde6}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{border:1px solid #223d58;background:#0b1b2a;border-radius:10px;padding:10px}.metric b{display:block;font-size:17px;margin-top:4px}.metric span{color:var(--muted);font-size:11px}.final{margin-top:10px;padding:13px;border:1px solid #2b7456;background:#102d26;border-radius:12px}.final strong{color:#70efa9}.disclaimer{font-size:11px;color:#8ea5bb;line-height:1.4;margin-top:9px}
+
+/* stages & tables with increased font sizes for visibility */
+.stages{display:grid;grid-template-columns:repeat(10,1fr);gap:8px;margin-top:16px}@media(max-width:1100px){.stages{grid-template-columns:repeat(5,1fr)}}@media(max-width:650px){.stages{grid-template-columns:1fr 1fr}}.stage{border:1px solid #27425e;background:#0b1b2b;border-radius:12px;padding:9px;min-height:135px}.stage .n{width:27px;height:27px;display:grid;place-items:center;border-radius:50%;background:#1d3651;font-weight:800}.stage.active{border-color:var(--cyan);box-shadow:0 0 15px #55dfff22}.stage.done{border-color:#2c7355}.stage h3{font-size:13px;margin:8px 0 4px}.stage p{font-size:11px;color:var(--muted);line-height:1.35;margin:0}.stage .out{margin-top:7px;color:#74efa9;font-size:11px;font-weight:700}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}@media(max-width:900px){.grid2{grid-template-columns:1fr}}.tablewrap{overflow:auto}
+
+/* Enhanced Table Styling */
+.wiring{width:100%;border-collapse:collapse;min-width:950px}.wiring th,.wiring td{padding:14px 16px;border:1px solid #32557a;text-align:left;font-size:14px}.wiring th{background:#142a40;font-size:15px;color:var(--cyan)}.proof{color:#73efa9;font-weight:700}.warn{color:#ffd166}.conn{font-family:Consolas,monospace;color:#8feaff;font-weight:700}
+.readings{width:100%;border-collapse:collapse;min-width:900px}.readings th,.readings td{padding:9px;border-bottom:1px solid #243b55;text-align:left;font-size:13px}.readings th{color:#aac0d8}
+.log{height:230px;overflow:auto;background:#06101a;border:1px solid #20384f;border-radius:12px;padding:12px;font-family:Consolas,monospace;font-size:12px}.log div{margin-bottom:7px}.time{color:#6fe6ff}.progress{height:11px;background:#1b3046;border-radius:99px;overflow:hidden;margin-top:12px}.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#55dfff,#4be58b);transition:width .3s}.note{color:var(--muted);font-size:13px;line-height:1.5}.categorymap{display:grid;grid-template-columns:1fr 1fr;gap:12px}.mapitem{padding:14px;border:1px solid #2c4d6d;border-radius:12px;background:#0b1a29;font-size:14px}.mapitem b{display:block;margin-bottom:5px;font-size:15px;color:var(--cyan)}.mapitem span{color:var(--muted);font-size:13px}footer{color:#8298af;font-size:11px;line-height:1.5;margin:16px 2px}
+.final.poor{background:#b3261e!important;border-color:#ff6b62!important}.final.poor strong,.final.poor span{color:#fff!important}.safe.poor{background:#b3261e!important;color:#fff!important;border-color:#ff6b62!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= PAGE 1: FRONT COVER & TEAM PROFILE ================= -->
+  <div id="page1" class="page-view active">
+    <section class="front-page">
+      
+      <!-- Official RIT Banner Image Container (Full Image, No Crop) -->
+      <div class="institute-banner-wrapper">
+        <img src="https://i.postimg.cc/Dy1S61MN/Gemini-Generated-Image-umnei8umnei8umne.png" alt="Rajarambapu Institute of Technology Banner">
+      </div>
+
+      <h1>Smart Fruit Safety Scanner</h1>
+      <div class="front-subtitle">
+        <b>Project Introduction & Understanding:</b> An advanced embedded ESP32 two-probe system engineered for non-destructive and sample-based evaluation of fruit freshness, ripeness, internal pH, and chemical residue screening. Designed to ensure food safety and quality automation for agricultural logistics and consumers.
+      </div>
+      
+      <!-- TEAM MEMBERS SECTION WITH IMAGE SUPPORT -->
+      <div class="team-section">
+        <h3 style="color:var(--cyan);font-size:16px;margin-bottom:12px;">👥 Project Team Members</h3>
+        <div class="team-grid">
+          
+          <!-- Team Member 1 (Tanvi) -->
+          <div class="team-member-card">
+            <div class="team-avatar">
+              <img src="https://i.postimg.cc/vTG7bzjX/Whats-App-Image-2026-10-06-at-8-42-40-AM.jpg" alt="Tanvi Anil Shinde">
+            </div>
+            <h4>Tanvi Anil Shinde</h4>
+            <span>2503062</span>
+          </div>
+
+          <!-- Team Member 2 -->
+          <div class="team-member-card">
+            <div class="team-avatar">
+              <img src="https://i.postimg.cc/fW3DvNg8/Whats-App-Image-2026-10-05-at-4-13-16-PM.jpg" alt="Team Member 2">
+            </div>
+            <h4>Diksha Popat Sutar</h4>
+            <span>2503066</span>
+          </div>
+
+          <!-- Team Member 3 -->
+          <div class="team-member-card">
+            <div class="team-avatar">
+              <img src="https://i.postimg.cc/W1znd54F/Whats-App-Image-2026-10-06-at-8-39-59-AM.jpg" alt="Team Member 3">
+            </div>
+            <h4>Anushka Sunil Gurav</h4>
+            <span>2503065</span>
+          </div>
+
+          <!-- Team Member 4 -->
+          <div class="team-member-card">
+            <div class="team-avatar">
+              <img src="https://i.postimg.cc/SKGwmZ1J/Whats-App-Image-2026-10-05-at-11-21-59-PM.jpg" alt="Team Member 4">
+            </div>
+            <h4>Pranali Prakash Patil</h4>
+            <span>2503064</span>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="project-meta">
+        <div class="meta-box">
+          <span>Project Guide / Mentor:</span>
+          <b>Mr. D. R. Patil</b>
+        </div>
+        
+
+      <!-- Proceed Button -->
+      <div style="margin-top:30px;">
+        <button onclick="goToPage(2)" style="background:linear-gradient(135deg,#117f9f,#14b8a6); padding:14px 35px; font-size:16px; border-radius:12px;">🚀 Proceed to Hardware Prototype View &rarr;</button>
+      </div>
+    </section>
+  </div>
+
+
+  <!-- ================= PAGE 2: SINGLE PROTOTYPE SHOWCASE ================= -->
+  <div id="page2" class="page-view">
+    <div class="page-nav-bar">
+      <span>📸 Page 2 of 6: Hardware Prototype & Model Showcase</span>
+      <div class="nav-buttons">
+        <button onclick="goToPage(1)" style="background:#27425e; padding:8px 15px;">&larr; Back to Cover</button>
+        <button onclick="goToPage(3)" style="background:#117f9f; padding:8px 15px;">Next: Live Simulation &rarr;</button>
+      </div>
+    </div>
+
+    <section class="card" style="padding:30px; text-align:center;">
+      <h2 style="font-size:26px; color:var(--cyan); margin-bottom:8px;">Physical Prototype & Hardware Enclosure Architecture</h2>
+      <p class="note" style="margin-bottom:25px; font-size:15px; max-width:900px; margin-left:auto; margin-right:auto;">Detailed visual breakdown of the ESP32 handheld scanner unit, sample chamber mechanism, optical multispectral sensors, and precision fluid-handling actuators.</p>
+      
+      <div class="single-model-container">
+        <img src="https://i.postimg.cc/gcZjnnGj/Whats-App-Image-2026-09-26-at-6-36-47-PM.jpg" alt="ESP32 Hardware Prototype View">
+        <div class="img-placeholder-text">ESP32 Handheld Enclosure, OLED Interface & Two-Probe Unit Model</div>
+      </div>
+
+      <div style="margin-top:25px; max-width:900px; margin-left:auto; margin-right:auto; text-align:left; background:rgba(19,37,58,0.7); padding:20px; border-radius:14px; border:1px solid var(--line);">
+        <h4 style="margin:0 0 8px 0; color:var(--cyan); font-size:16px;">Engineering Highlights of the Model:</h4>
+        <p style="margin:0; font-size:14px; color:var(--muted); line-height:1.6;">The physical prototype integrates a custom 3D-printed handheld casing housing the ESP32 microcontroller, dual peristaltic pumps for the injection and collection probes, an AS7265x optical sensor module aligned with a quartz sample window, and an independent Li-ion power regulation circuit.</p>
+      </div>
+
+      <div style="margin-top:30px; text-align:right;">
+        <button onclick="goToPage(3)" style="background:#117f9f; padding:12px 30px; font-size:15px;">Proceed to Simulation &rarr;</button>
+      </div>
+    </section>
+  </div>
+
+
+  <!-- ================= PAGE 3: LIVE SIMULATION & DASHBOARD ================= -->
+  <div id="page3" class="page-view">
+    <div class="page-nav-bar">
+      <span>⚙️ Page 3 of 6: Live ESP32 Simulation & Sensor Array</span>
+      <div class="nav-buttons">
+        <button onclick="goToPage(2)" style="background:#27425e; padding:8px 15px;">&larr; Back to Prototype</button>
+        <button onclick="goToPage(4)" style="background:#117f9f; padding:8px 15px;">Next: Hardware Setup &rarr;</button>
+      </div>
+    </div>
+
+    <section class="hero">
+      <h1>🍎 Interactive Simulation Dashboard</h1>
+      <div class="sub">Control panel and real-time visualization of the ESP32 sensor array, two-probe injection/collection cycle, and instant customer quality status.</div>
+      <div class="controls">
+        <select id="fruit">
+          <option>Apple</option><option>Mango</option><option>Orange</option><option>Watermelon</option><option>Grape</option><option>Guava</option><option>Papaya</option>
+        </select>
+        <select id="speed">
+          <option value="1">Real time (45 s)</option>
+          <option value="3">3× faster</option>
+          <option value="5" selected>5× faster</option>
+        </select>
+        <button id="start">▶ Start Full Scan</button>
+        <button id="reset">↺ Reset</button>
+      </div>
+    </section>
+
+    <div class="topgrid">
+      <section class="card">
+        <h2>1. Internal machine animation — two-probe system</h2>
+        <div class="machinebox">
+          <div>
+            <div id="scanner" class="scanner">
+              <div class="scanner-title">FRUIT CHAMBER / SAMPLE PATH</div>
+              <div id="fruitShape" class="fruit">🍎</div>
+              <div class="probe probe1" title="Probe 1 — injection"></div>
+              <div class="probe probe2" title="Probe 2 — collection"></div>
+              <div class="fluid"></div>
+              <div class="sample"></div>
+              <div class="statusbadge" id="probeStatus">Ready — probes retracted</div>
+              <div class="pump">DC pump + valve control</div>
+            </div>
+            <div class="legend">
+              <span class="inj">Probe 1: Injection</span>
+              <span class="col">Probe 2: Collection</span>
+              <span class="samp">Collected pulp/sample</span>
+            </div>
+          </div>
+          <div>
+            <h3>What the two probes do</h3>
+            <div class="mapitem"><b>Probe 1 — Injection</b><span>Conceptually introduces a controlled sterile sampling liquid.</span></div><br>
+            <div class="mapitem"><b>Probe 2 — Collection</b><span>Draws the mixed pulp/sample into the collection path for sensors.</span></div><br>
+            <div class="mapitem"><b>Internal Path</b><span>pH sensor (GPIO32) & AS7265x multispectral NIR cell.</span></div>
+            <p class="note">For an actual device, fluid handling requires laboratory supervision. This simulation is strictly for engineering concept demonstration.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>2. Final display — customer view</h2>
+        <div class="dashboard">
+          <div class="dashhead">
+            <div>
+              <div class="fruitname" id="dashFruit">Apple</div>
+              <div class="note">Fruit quality screening</div>
+            </div>
+            <div class="safe" id="safeBadge">PRELIMINARY RESULT</div>
+          </div>
+          <div class="dashfruit" id="dashEmoji">🍎</div>
+          <div class="metrics">
+            <div class="metric"><span>Ripeness</span><b id="dRip">—</b></div>
+            <div class="metric"><span>Freshness</span><b id="dFresh">—</b></div>
+            <div class="metric"><span>Colour</span><b id="dColor">—</b></div>
+            <div class="metric"><span>Spoilage / VOC</span><b id="dSpoil">—</b></div>
+            <div class="metric"><span>Pulp pH</span><b id="dPH">—</b></div>
+            <div class="metric"><span>Firmness / weight</span><b id="dFirm">—</b></div>
+            <div class="metric"><span>Pesticide residue</span><b id="dPest">Screening only</b></div>
+            <div class="metric"><span>Artificial dye</span><b id="dDye">Screening only</b></div>
+            <div class="metric"><span>Wax / coating</span><b id="dWax">Screening only</b></div>
+            <div class="metric"><span>Temperature</span><b id="dTemp">—</b></div>
+          </div>
+          <div class="final">
+            <strong id="dFinal">Waiting for scan</strong><br>
+            <span id="dFinalText">Customer sees only the summarized screening result; detailed raw sensor values are stored in the inspection report.</span>
+          </div>
+          <div class="disclaimer">Important: pesticide, artificial-colour and coating outputs are screening indicators. Exact food-safety conclusions require validated laboratory methods.</div>
+        </div>
+      </section>
+    </div>
+
+    <section class="card">
+      <h2>3. Live 10-step internal simulation (0–45 s)</h2>
+      <div class="stages" id="stages"></div>
+      <div class="progress"><i id="progress"></i></div>
+      <p class="note" id="clock" style="margin-top:8px">T = 0 s / 45 s</p>
+      <p class="note" id="status">Ready. Select a fruit and press Start Full Scan.</p>
+    </section>
+
+    <div class="grid2">
+      <section class="card">
+        <h2>4. Live sensor readings + result produced at each step</h2>
+        <div class="tablewrap">
+          <table class="readings">
+            <thead>
+              <tr><th>Step/category</th><th>Sensor/actuator</th><th>Live simulated data</th><th>Result</th></tr>
+            </thead>
+            <tbody id="readings"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="card">
+        <h2>5. Live processing log</h2>
+        <div class="log" id="log"></div>
+      </section>
+    </div>
+  </div>
+
+
+  <!-- ================= PAGE 4: HARDWARE SETUP & SENSORS ================= -->
+  <div id="page4" class="page-view">
+    <div class="page-nav-bar">
+      <span>🔌 Page 4 of 6: Internal Hardware Setup & Architecture</span>
+      <div class="nav-buttons">
+        <button onclick="goToPage(3)" style="background:#27425e; padding:8px 15px;">&larr; Back to Simulation</button>
+        <button onclick="goToPage(5)" style="background:#117f9f; padding:8px 15px;">Next: Connection Proofs &rarr;</button>
+      </div>
+    </div>
+
+    <section class="card" style="padding:25px;">
+      <h2 style="font-size:24px; color:var(--cyan); margin-bottom:15px;">Internal Hardware Setup — Sensors Used in This Analysis</h2>
+      <p class="note" style="margin-bottom:20px; font-size:14px;">The following modular hardware architecture powers the dual-probe ESP32 scanner device:</p>
+      
+      <div class="categorymap" style="grid-template-columns: 1fr 1fr; gap:15px;">
+        <div class="mapitem"><b>OLED Display (0.96")</b><span>SDA → GPIO21 · SCL → GPIO22 (I²C)</span></div>
+        <div class="mapitem"><b>AS7265x NIR / Multispectral Sensor</b><span>SDA → GPIO21 · SCL → GPIO22 (I²C) — 18 channels</span></div>
+        <div class="mapitem"><b>TCS34725 Colour Sensor</b><span>SDA → GPIO21 · SCL → GPIO22 (I²C) — R, G, B, C</span></div>
+        <div class="mapitem"><b>UV Sensor — GUVA-S12SD</b><span>AOUT → GPIO34 (ADC)</span></div>
+        <div class="mapitem"><b>MQ-3 Gas Sensor</b><span>AOUT → GPIO35 (ADC)</span></div>
+        <div class="mapitem"><b>MQ-135 Gas Sensor</b><span>AOUT → GPIO36 (ADC)</span></div>
+        <div class="mapitem"><b>DS18B20 Temperature Sensor</b><span>DQ → GPIO4 (1-Wire)</span></div>
+        <div class="mapitem"><b>pH Sensor (with sample)</b><span>AOUT → GPIO32 (through ADC)</span></div>
+        <div class="mapitem"><b>Load Cell + HX711</b><span>DT → GPIO18 · SCK → GPIO19</span></div>
+        <div class="mapitem"><b>Scan Button</b><span>GPIO27</span></div>
+        <div class="mapitem"><b>Two-Probe System</b><span>Probe 1 = injection · Probe 2 = collection (DC pump + valve control)</span></div>
+        <div class="mapitem"><b>ESP32 Microcontroller + Battery (3.7V Li-ion)</b><span>Main controller, filtering, normalising, model "Fruit-Quality-V1"</span></div>
+      </div>
+
+      <div style="margin-top:30px; text-align:right;">
+        <button onclick="goToPage(5)" style="background:#117f9f; padding:12px 30px; font-size:15px;">Next: Connection Proofs &rarr;</button>
+      </div>
+    </section>
+  </div>
+
+
+  <!-- ================= PAGE 5: CONNECTION PROOFS & CATEGORIES ================= -->
+  <div id="page5" class="page-view">
+    <div class="page-nav-bar">
+      <span>📋 Page 5 of 6: Sensor Connection Proofs & Category Mapping</span>
+      <div class="nav-buttons">
+        <button onclick="goToPage(4)" style="background:#27425e; padding:8px 15px;">&larr; Back to Hardware</button>
+        <button onclick="goToPage(6)" style="background:#16a34a; padding:8px 15px;">Next: Inspection Report &rarr;</button>
+      </div>
+    </div>
+
+    <section class="card" style="padding:25px;">
+      <h2 style="font-size:24px; color:var(--cyan); margin-bottom:15px;">6. Sensor + Actuator &rarr; ESP32 Connection Proof</h2>
+      <div class="tablewrap" style="margin-bottom:30px;">
+        <table class="wiring">
+          <thead>
+            <tr><th>Device</th><th>Pin/signal</th><th>ESP32 connection</th><th>Interface</th><th>Purpose in this fruit-only machine</th><th>Proof</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>AS7265x (NIR / Multispectral)</td><td>VCC/GND</td><td class="conn">3.3V / GND</td><td>Power</td><td>Spectral features for ripeness/quality model</td><td class="proof">✓ POWER/GND</td></tr>
+            <tr><td>AS7265x (NIR / Multispectral)</td><td>SDA/SCL</td><td class="conn">GPIO21 / GPIO22</td><td>I²C</td><td>18-channel NIR spectral data of the pulp</td><td class="proof">✓ DATA/CLOCK</td></tr>
+            <tr><td>TCS34725 (Colour)</td><td>VCC/GND</td><td class="conn">3.3V / GND</td><td>Power</td><td>Surface + pulp colour features</td><td class="proof">✓ POWER/GND</td></tr>
+            <tr><td>TCS34725 (Colour)</td><td>SDA/SCL</td><td class="conn">GPIO21 / GPIO22</td><td>I²C</td><td>R, G, B, C readings</td><td class="proof">✓ DATA/CLOCK</td></tr>
+            <tr><td>GUVA-S12SD (UV)</td><td>AOUT</td><td class="conn">GPIO34 (ADC)</td><td>Analog</td><td>UV response → wax/coating screening</td><td class="proof">✓ ADC</td></tr>
+            <tr><td>MQ-3 (Gas)</td><td>AOUT</td><td class="conn">GPIO35 (ADC)</td><td>Analog</td><td>Ethanol/VOC → spoilage indication</td><td class="proof">✓ ADC</td></tr>
+            <tr><td>MQ-135 (Gas)</td><td>AOUT</td><td class="conn">GPIO36 (ADC)</td><td>Analog</td><td>VOC/ammonia-type response feature</td><td class="proof">✓ ADC</td></tr>
+            <tr><td>DS18B20 (Temp)</td><td>DQ</td><td class="conn">GPIO4 + pull-up</td><td>1-Wire</td><td>Sample temperature / compensation</td><td class="proof">✓ DATA</td></tr>
+            <tr><td>pH Sensor</td><td>AOUT</td><td class="conn">GPIO32 (through ADC conditioning)</td><td>Analog</td><td>pH of collected pulp sample</td><td class="proof">✓ ADC</td></tr>
+            <tr><td>Load Cell + HX711</td><td>DT</td><td class="conn">GPIO18</td><td>Digital</td><td>Digitized load signal (weight)</td><td class="proof">✓ DATA</td></tr>
+            <tr><td>Load Cell + HX711</td><td>SCK</td><td class="conn">GPIO19</td><td>Digital</td><td>HX711 clock — firmness/weight feature</td><td class="proof">✓ CLOCK</td></tr>
+            <tr><td>OLED (0.96")</td><td>SDA/SCL</td><td class="conn">GPIO21 / GPIO22</td><td>I²C</td><td>Result displayed on OLED</td><td class="proof">✓ DISPLAY</td></tr>
+            <tr><td>Scan Button</td><td>OUT</td><td class="conn">GPIO27</td><td>Digital</td><td>Start scan command</td><td class="proof">✓ INPUT</td></tr>
+            <tr><td>Probe 1 — DC pump</td><td>Control</td><td class="conn">GPIO25 → driver/MOSFET → pump</td><td>Digital actuator</td><td>Injection of sterile liquid</td><td class="proof">✓ ACTUATOR</td></tr>
+            <tr><td>Probe 2 — valve/pump</td><td>Control</td><td class="conn">GPIO26 → driver/MOSFET → valve</td><td>Digital actuator</td><td>Collection of pulp sample</td><td class="proof">✓ ACTUATOR</td></tr>
+            <tr><td>Battery (3.7V Li-ion)</td><td>Power</td><td class="conn">Regulator → 3.3V / 5V rails</td><td>Power</td><td>Powers ESP32 and sensors</td><td class="proof">✓ POWER</td></tr>
+            <tr><td>Two probes</td><td>Fluid/sample lines</td><td class="conn">Mechanical/fluid path to sample chamber</td><td>Not GPIO</td><td>Probe 1 injects; Probe 2 collects</td><td class="proof">✓ SAMPLE PATH</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note" style="margin-bottom:30px;">Pin map is a simulation/reference architecture, not a final PCB schematic. MQ-series outputs and other analog modules must be electrically conditioned so the ESP32 ADC never receives an out-of-range voltage.</p>
+
+      <h2 style="font-size:24px; color:var(--cyan); margin-bottom:15px;">7. Inspection Category &rarr; Sensor Proof</h2>
+      <div class="categorymap" style="grid-template-columns: 1fr 1fr; gap:15px;">
+        <div class="mapitem"><b>Ripeness</b><span>AS7265x (NIR) + TCS34725 colour → ESP32 model.</span></div>
+        <div class="mapitem"><b>Freshness</b><span>AS7265x + MQ-3/MQ-135 + DS18B20 → fused model.</span></div>
+        <div class="mapitem"><b>Colour abnormality</b><span>TCS34725 RGB/C → colour classification.</span></div>
+        <div class="mapitem"><b>Spoilage / VOC indication</b><span>MQ-3 + MQ-135 + DS18B20 → response pattern.</span></div>
+        <div class="mapitem"><b>Pulp pH</b><span>Collection probe → sample chamber → pH sensor → GPIO32.</span></div>
+        <div class="mapitem"><b>Weight / firmness feature</b><span>Load cell → HX711 (GPIO18/19) → ESP32.</span></div>
+        <div class="mapitem"><b>Surface coating screening</b><span>GUVA-S12SD UV (GPIO34) → ESP32 ADC/model.</span></div>
+        <div class="mapitem"><b>Pesticide screening</b><span>Multispectral/colour features + validated reference dataset → screening model only.</span></div>
+        <div class="mapitem"><b>Artificial-colour screening</b><span>Colour + spectral features + reference calibration → screening indication only.</span></div>
+        <div class="mapitem"><b>Overall result</b><span>ESP32 combines calibrated features and sends the summarized result to OLED/website.</span></div>
+      </div>
+
+      <div style="margin-top:30px; text-align:right;">
+        <button onclick="goToPage(6)" style="background:#16a34a; padding:12px 30px; font-size:15px;">Next: Inspection Report &rarr;</button>
+      </div>
+    </section>
+  </div>
+
+
+  <!-- ================= PAGE 6: EXPANDED OFFICIAL INSPECTION REPORT ================= -->
+  <div id="page6" class="page-view">
+    <div class="page-nav-bar">
+      <span>📋 Page 6 of 6: Expanded Official Customer Inspection Report</span>
+      <div class="nav-buttons">
+        <button onclick="goToPage(5)" style="background:#27425e; padding:8px 15px;">&larr; Back to Proofs</button>
+        <button onclick="window.print()" style="background:#16a34a; padding:8px 15px;">🖨 Print / Save PDF</button>
+      </div>
+    </div>
+
+    <section class="card" style="background:linear-gradient(135deg,#0e2238,#091828); border-color:var(--cyan); padding:30px;">
+      <div style="text-align:center; border-bottom:2px solid var(--line); padding-bottom:15px; margin-bottom:25px;">
+        <h2 style="color:var(--cyan); font-size:26px; margin-bottom:5px;">📋 Comprehensive Fruit Quality & Safety Inspection Report</h2>
+        <p style="color:var(--text); font-weight:700; margin:0;">Rajarambapu Institute of Technology — Smart Sorting System Output</p>
+        <p id="reportTimestamp" style="color:var(--muted); margin:6px 0 0 0; font-size:13px;"></p>
+      </div>
+
+      <!-- Expanded Report Content Grid -->
+      <div id="reportContent" class="categorymap" style="grid-template-columns:1fr 1fr; gap:15px; margin-bottom:30px;"></div>
+
+      <div style="background:rgba(19,37,58,0.8); padding:20px; border-radius:14px; border:1px solid var(--line); margin-bottom:25px;">
+        <h4 style="margin:0 0 10px 0; color:var(--cyan); font-size:16px;">🧪 Laboratory & Compliance Certification Notes:</h4>
+        <p style="margin:0; font-size:13px; color:var(--muted); line-height:1.6;">
+          1. <b>Model Version:</b> Fruit-Quality-V1 trained on multi-sensor fusion arrays.<br>
+          2. <b>Calibration Standard:</b> Normalized against baseline spectrometer references at 22.5°C ambient temperature.<br>
+          3. <b>Food Safety Warning:</b> Screening indicators for pesticide residues and artificial dyes are preliminary; official regulatory clearance requires certified high-performance liquid chromatography (HPLC) testing.
+        </p>
+      </div>
+
+      <div style="text-align:center; display:flex; justify-content:center; gap:15px; flex-wrap:wrap;">
+        <button onclick="window.print()" style="background:#117f9f; padding:12px 28px;">🖨 Print / Save Detailed Report Card</button>
+        <button onclick="goToPage(3)" style="background:#27425e; padding:12px 28px;">&larr; Run New Scan</button>
+      </div>
+    </section>
+  </div>
+
+  <footer style="margin-top:30px;"><b>Prototype rule:</b> The numerical values in this browser simulation are illustrative. Real fruit-specific thresholds and ML outputs must be obtained by calibration and validation against reference measurements. Developed by Tanvi Anil Shinde & Team at Rajarambapu Institute of Technology.</footer>
+</div>
+
+<script>
+const WM='<svg viewBox="0 0 100 100" width="1em" height="1em"><ellipse cx="50" cy="56" rx="44" ry="35" fill="#2f8f46"/><path d="M50 21C36 32 33 50 36 78M50 21C64 32 67 50 64 78M50 21C50 40 50 60 50 91M50 21C26 32 18 55 25 76M50 21C74 32 82 55 75 76" fill="none" stroke="#14532d" stroke-width="4.5" stroke-linecap="round"/><ellipse cx="34" cy="42" rx="12" ry="6" fill="#ffffff" opacity=".22" transform="rotate(-25 34 42)"/><path d="M50 21C50 15 52 11 57 9" fill="none" stroke="#7a5a2a" stroke-width="4" stroke-linecap="round"/></svg>';
+const PP='<svg viewBox="0 0 100 100" width="1em" height="1em"><g transform="rotate(20 50 50)"><path d="M50 6C67 6 83 38 80 66C78 86 62 95 50 95C38 95 22 86 20 66C17 38 33 6 50 6Z" fill="#f2a12c" stroke="#b96a12" stroke-width="2"/><path d="M50 6C60 6 68 16 73 28C62 22 55 24 50 34C45 24 38 22 27 28C32 16 40 6 50 6Z" fill="#8fb842"/><ellipse cx="38" cy="58" rx="6" ry="16" fill="#fff" opacity=".22"/><path d="M50 6L50 1" stroke="#6b4a1e" stroke-width="3.5" stroke-linecap="round"/></g></svg>';
+function fruitArt(p){return p.svg||p.emoji}
+
+const profiles={
+Apple:{emoji:'🍎',rip:85,fresh:88,spoil:'Low',color:'Normal',pH:'4.2',firm:'Firm',temp:'22.4 °C',pest:'Low',dye:'Low',wax:'Low',weight:'162 g',mq3:'0.12',mq135:'0.08',rgb:'R: 142  G: 56  B: 48  C: 320',sig:2450,uv:'0.18 V'},
+Mango:{emoji:'🥭',rip:84,fresh:86,spoil:'Low',color:'Normal',pH:'4.2',firm:'Medium',temp:'22.8 °C',pest:'Low',dye:'Low',wax:'Low',weight:'286 g',mq3:'0.14',mq135:'0.09',rgb:'R: 235  G: 150  B: 40  C: 430',sig:2380,uv:'0.16 V'},
+Orange:{emoji:'🍊',rip:79,fresh:84,spoil:'Low',color:'Normal',pH:'3.5',firm:'Firm',temp:'22.0 °C',pest:'Low',dye:'Low',wax:'Low',weight:'176 g',mq3:'0.11',mq135:'0.07',rgb:'R: 240  G: 130  B: 30  C: 440',sig:2420,uv:'0.17 V'},
+Watermelon:{emoji:'🍉',svg:WM,bad:true,rip:96,fresh:31,spoil:'HIGH',color:'Abnormal pattern',pH:'5.9',firm:'Soft',temp:'27.6 °C',pest:'Elevated (screening)',dye:'Suspected (screening)',wax:'Low',weight:'2.8 kg',mq3:'0.62',mq135:'0.48',rgb:'R: 120  G: 70  B: 90  C: 260',sig:1710,uv:'0.31 V'},
+Grape:{emoji:'🍇',rip:75,fresh:79,spoil:'Low',color:'Normal',pH:'3.6',firm:'Medium',temp:'21.8 °C',pest:'Low',dye:'Low',wax:'Low',weight:'8 g/berry',mq3:'0.15',mq135:'0.09',rgb:'R: 90  G: 50  B: 110  C: 250',sig:2290,uv:'0.14 V'},
+Guava:{emoji:'🍐',rip:81,fresh:83,spoil:'Low',color:'Normal',pH:'4.1',firm:'Medium',temp:'22.3 °C',pest:'Low',dye:'Low',wax:'Low',weight:'142 g',mq3:'0.13',mq135:'0.08',rgb:'R: 150  G: 190  B: 70  C: 380',sig:2350,uv:'0.16 V'},
+Papaya:{emoji:'🥭',svg:PP,rip:86,fresh:80,spoil:'Low',color:'Normal',pH:'5.2',firm:'Medium',temp:'23.0 °C',pest:'Low',dye:'Low',wax:'Low',weight:'1.1 kg',mq3:'0.17',mq135:'0.11',rgb:'R: 240  G: 140  B: 60  C: 420',sig:2270,uv:'0.16 V'}
+};
+
+const stages=[
+['Fruit Placement','Chamber sensor + Scan Button (GPIO27)',0,3,(f,p)=>`Fruit: ${f} · Status: Locked`],
+['Pulp Injection & Collection','Probe 1 (pump) + Probe 2 (valve)',3,8,(f,p)=>`Pulp volume: 0.5 ml · Pressure: 0.2 bar`],
+['NIR / Spectral Scan','AS7265x (I²C GPIO21/22)',8,12,(f,p)=>`Channels: 18 · Signal: ${p.sig}`],
+['Colour Scan','TCS34725 (I²C GPIO21/22)',12,16,(f,p)=>p.rgb],
+['Gas/VOC Scan','MQ-3 + MQ-135 (ADC)',16,20,(f,p)=>`MQ-3: ${p.mq3} V · MQ-135: ${p.mq135} V`],
+['Temperature','DS18B20 (GPIO4)',20,23,(f,p)=>`Temperature: ${p.temp}`],
+['pH Test','pH sensor (AOUT → GPIO32)',23,28,(f,p)=>`pH: ${p.pH}`],
+['Load / Weight','Load cell + HX711',28,32,(f,p)=>`Weight: ${p.weight} · Firmness: ${p.firm}`],
+['Data Processing & AI','ESP32 + GUVA-S12SD UV',32,40,(f,p)=>`Model: Fruit-Quality-V1 · UV: ${p.uv}`],
+['Final Result','OLED + Web Dashboard',40,45,(f,p)=>`Quality: ${p.bad?'Poor':'Good'} · Safe: ${p.bad?'No':'Yes'}`]
+];
+
+const rows=[
+['Ripeness','AS7265x (NIR) + TCS34725','Waiting','Pending'],
+['Freshness','AS7265x + MQ-3/MQ-135 + DS18B20','Waiting','Pending'],
+['Spoilage / VOC','MQ-3 (GPIO35) + MQ-135 (GPIO36)','Waiting','Pending'],
+['Colour','TCS34725 (R,G,B,C)','Waiting','Pending'],
+['Pulp pH','Probe 2 collection → pH sensor (GPIO32)','Waiting','Pending'],
+['Weight / firmness','Load cell + HX711 (GPIO18/19)','Waiting','Pending'],
+['Wax / coating','GUVA-S12SD UV (GPIO34)','Waiting','Pending'],
+['Pesticide residue','Multispectral screening model','Screening only','Pending'],
+['Artificial dye','Colour + spectral screening model','Screening only','Pending']
+];
+
+const $=id=>document.getElementById(id);
+let runId=0;
+
+function goToPage(pageNumber) {
+  document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+  $('page' + pageNumber).classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function buildStages(){$('stages').innerHTML=stages.map((s,i)=>`<div class="stage" id="st${i}"><div class="n">${i+1}</div><h3>${s[0]}</h3><p>${s[1]}</p><p style="margin-top:5px;color:#6fe6ff">${s[2]}–${s[3]} s</p><p class="live" style="margin-top:5px;color:#dbeafe">Live data: —</p><div class="out">WAIT</div></div>`).join('')}
+function buildRows(){$('readings').innerHTML=rows.map((r,i)=>`<tr id="row${i}"><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td><span class="tag">${r[3]}</span></td></tr>`).join('')}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function log(x){const l=$('log');if(l){l.innerHTML+=`<div><span class="time">[${new Date().toLocaleTimeString()}]</span> ${x}</div>`;l.scrollTop=l.scrollHeight}}
+function stage(i,state,live){const e=$('st'+i);if(!e)return;e.classList.remove('active','done');e.querySelector('.out').textContent=state==='run'?'RUNNING':state==='done'?'DONE':'WAIT';if(live)e.querySelector('.live').textContent='Live data: '+live;if(state==='run')e.classList.add('active');if(state==='done')e.classList.add('done')}
+function row(i,val,tag='DONE'){const e=$('row'+i);if(!e)return;e.cells[2].textContent=val;e.cells[3].innerHTML=`<span class="tag ${tag==='DONE'?'ok':'warn'}">${tag}</span>`}
+function probe(mode){const s=$('scanner');if(!s)return;s.classList.remove('inject','collect','finish');if(mode)s.classList.add(mode);$('probeStatus').textContent=mode==='inject'?'Probe 1 active — injection':mode==='collect'?'Probe 2 active — collection':'Ready — probes retracted'}
+function setClock(t){$('clock').textContent=`T = ${Math.round(t)} s / 45 s`;$('progress').style.width=(t/45*100)+'%'}
+
+function reset(){
+  runId++;
+  ['.final','.safe'].forEach(q=>{let el=document.querySelector(q);if(el)el.classList.remove('poor');});
+  const _f=$('fruit').value,_p=profiles[_f];$('fruitShape').innerHTML=fruitArt(_p);
+  $('dashEmoji').innerHTML=fruitArt(_p);$('dashFruit').textContent=_f;
+  buildStages();buildRows();$('log').innerHTML='';setClock(0);$('status').textContent='Ready. Select a fruit and press Start Full Scan.';
+  probe('');
+  ['dRip','dFresh','dColor','dSpoil','dPH','dFirm','dTemp'].forEach(id=>$(id).textContent='—');
+  ['dPest','dDye','dWax'].forEach(id=>$(id).textContent='Screening only');$('dFinal').textContent='Waiting for scan';$('dFinalText').textContent='Customer sees only the summarized screening result.';$('safeBadge').textContent='PRELIMINARY RESULT';
+}
+
+async function runWindow(t0,t1,id){
+  const speed=+$('speed').value,ms=(t1-t0)*1000/speed,steps=Math.max(4,Math.round((t1-t0)*2)),dt=ms/steps;
+  for(let k=1;k<=steps;k++){
+    if(id!==runId)return false;
+    await sleep(dt);
+    setClock(t0+(t1-t0)*k/steps)
+  }
+  return true
+}
+
+async function scan(){
+  reset();
+  const id=runId,fruit=$('fruit').value,p=profiles[fruit];$('dashFruit').textContent=fruit;
+  $('dashEmoji').innerHTML=fruitArt(p);$('status').textContent=`Scanning ${fruit}...`;
+  log(`START: ${fruit} selected; Scan Button (GPIO27) pressed, chamber lock command issued.`);
+
+  for(let i=0;i<10;i++){
+    const s=stages[i],live=s[4](fruit,p);
+    if(id!==runId)return;
+    stage(i,'run',live);
+    log(`STEP ${i+1} (${s[2]}–${s[3]} s): ${s[0]} → ${s[1]}`);
+
+    if(i===0){probe('');log('Fruit detected in chamber. Status: Locked.')}
+    else if(i===1){
+      probe('inject');
+      log('Probe 1 injects sterile liquid and creates slight vacuum (GPIO25 pump).');
+      if(!await runWindow(s[2],s[2]+2.5,id))return;
+      probe('collect');
+      log('Probe 2 collects pulp sample back for analysis (GPIO26 valve). Pulp volume 0.5 ml.');
+      row(4,`Sample collected — pH ${p.pH}`,'RUNNING');
+      if(!await runWindow(s[2]+2.5,s[3],id))return
+    }
+    else if(i===2){log('AS7265x captured NIR spectral data of the pulp: 18 channels, signal '+p.sig+'.');row(0,p.rip+'% ripeness (est.)');if(!await runWindow(s[2],s[3],id))return}
+    else if(i===3){log('TCS34725 read surface and pulp colour: '+p.rgb+'.');row(3,p.color+' — '+p.rgb);if(!await runWindow(s[2],s[3],id))return}
+    else if(i===4){log(`MQ-3 = ${p.mq3} V, MQ-135 = ${p.mq135} V. Ethanol & VOC gases (spoilage indication).`);row(2,`MQ-3 ${p.mq3} V / MQ-135 ${p.mq135} V — ${p.spoil}`);if(!await runWindow(s[2],s[3],id))return}
+    else if(i===5){log('DS18B20 measured sample temperature = '+p.temp+'.');row(1,p.fresh+'% freshness (est.)');if(!await runWindow(s[2],s[3],id))return}
+    else if(i===6){log('pH sensor read collected pulp sample: pH '+p.pH+'.');row(4,'pH '+p.pH);if(!await runWindow(s[2],s[3],id))return}
+    else if(i===7){log(`Load cell + HX711 checked weight/firmness: ${p.weight} (${p.firm}).`);row(5,p.weight+' / '+p.firm);if(!await runWindow(s[2],s[3],id))return}
+    else if(i===8){log('ESP32 filtered and normalised all sensor data; GUVA-S12SD UV = '+p.uv+'; model Fruit-Quality-V1 running.');row(6,'UV '+p.uv+' — '+p.wax);row(7,p.pest,'SCREENING');row(8,p.dye,'SCREENING');if(!await runWindow(s[2],s[3],id))return}
+    else if(i===9){probe('finish');log('Result displayed on OLED and website.');if(!await runWindow(s[2],s[3],id))return}
+    else{if(!await runWindow(s[2],s[3],id))return}
+    stage(i,'done',live)
+  }
+
+  $('dRip').textContent=p.rip+'%';
+  $('dFresh').textContent=p.fresh+'\%';$('dColor').textContent=p.color;
+  $('dSpoil').textContent=p.spoil;
+  $('dPH').textContent=p.pH;
+  $('dFirm').textContent=p.weight+' ('+p.firm+')';$('dTemp').textContent=p.temp;
+  $('dPest').textContent=p.pest;
+  $('dDye').textContent=p.dye;
+  $('dWax').textContent=p.wax;
+  $('safeBadge').textContent=p.bad?'NOT RECOMMENDED':'SAFE TO EAT';
+  ['.final','.safe'].forEach(q=>document.querySelector(q).classList.toggle('poor',!!p.bad));
+  $('dFinal').textContent=p.bad?'POOR QUALITY':'GOOD QUALITY';
+  $('dFinalText').textContent=p.bad?`${fruit}: freshness ${p.fresh}%, spoilage ${p.spoil}, colour ${p.color}. Laboratory validation recommended.`:`No major issues detected. Safe for consumption. (Ripeness ${p.rip}%, freshness ${p.fresh}%.)`;
+  $('status').textContent='Scan complete — all 10 steps finished (45 s).';
+  log('FINAL: customer dashboard updated; probes retracted.');
+  probe('');
+  
+  generateReportData(fruit, p);
+}
+
+function generateReportData(fruit, p) {
+  $('reportTimestamp').textContent = 'Inspection Date/Time: ' + new Date().toLocaleString();
+  const items = [
+    {label: 'Sample Fruit Tested', val: fruit},
+    {label: 'Final Quality Decision', val: p.bad ? 'REJECTED (POOR QUALITY)' : 'APPROVED (SAFE TO EAT)'},
+    {label: 'Estimated Ripeness Index', val: p.rip + '% (Calibrated Model)'},
+    {label: 'Freshness Rating', val: p.fresh + '% (Multispectral Fusion)'},
+    {label: 'Surface & Pulp Color Signature', val: `${p.color} (${p.rgb})`},
+    {label: 'Spoilage & VOC Gas Level', val: `${p.spoil} (MQ-3: ${p.mq3}V, MQ-135: ${p.mq135}V)`},
+    {label: 'Extracted Pulp Sample pH', val: p.pH + ' (GPIO32 Electrode)'},
+    {label: 'Weight & Mechanical Firmness', val: `${p.weight} / ${p.firm}`},
+    {label: 'Internal Sample Temperature', val: p.temp + ' (DS18B20 1-Wire)'},
+    {label: 'Surface Wax / Coating Screening', val: p.wax + ` (UV Response: ${p.uv})`},
+    {label: 'Pesticide Residue Analysis', val: p.pest + ' (Screening threshold)'},
+    {label: 'Artificial Dye / Adulteration Check', val: p.dye + ' (Spectral signature match)'},
+    {label: 'ESP32 Firmware Classifier', val: 'Fruit-Quality-V1 (Normalised)'},
+    {label: 'Testing Officer / Authority', val: 'Tanvi Anil Shinde & Team (RIT)'}
+  ];
+  $('reportContent').innerHTML = items.map(item => `
+    <div class="mapitem">
+      <b>${item.label}</b>
+      <span>${item.val}</span>
+    </div>
+  `).join('');
+}
+
+$('start').onclick=scan;
+$('reset').onclick=reset;
+buildStages();buildRows();
+</script>
+</body>
+</html>
